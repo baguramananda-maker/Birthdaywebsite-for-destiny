@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday, My Love!</title>
+    <style>
+        /* Modern CSS reset and background styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: linear-gradient(135deg, #ffe5ec 0%, #ffb3c6 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            perspective: 1000px;
+        }
+
+        /* 3D Scene Setup */
+        .scene {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: float 4s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        /* Floating motion for the 3D box */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotateY(0deg); }
+            50% { transform: translateY(-20px) rotateY(15deg); }
+        }
+
+        /* Generic 3D Cube properties */
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-style: preserve-3d;
+        }
+        .face {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: #ff4d6d;
+            border: 2px solid #ff758f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Decorative ribbons across the cube faces */
+        .face::before {
+            content: '';
+            position: absolute;
+            background: #fff0f3;
+            box-shadow: 0 0 5px rgba(0,0,0,0.05);
+        }
+        .front::before, .back::before, .left::before, .right::before {
+            width: 40px;
+            height: 100%;
+        }
+        .top::before, .bottom::before {
+            width: 100%;
+            height: 40px;
+        }
+
+        /* Defining standard absolute coordinates for 3D box faces */
+        .front  { transform: rotateY(  0deg) translateZ(100px); }
+        .back   { transform: rotateY(180deg) translateZ(100px); }
+        .left   { transform: rotateY(-90deg) translateZ(100px); }
+        .right  { transform: rotateY( 90deg) translateZ(100px); }
+        .bottom { transform: rotateX(-90deg) translateZ(100px); background: #c9184a;}
+
+        /* Lid positioning and opening transition */
+        .top {
+            transform: rotateX(90deg) translateZ(100px);
+            background: #ff4d6d;
+            transform-origin: bottom center;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Animated lid action state triggered via Javascript class */
+        .scene.open .top {
+            transform: rotateX(150deg) translateZ(100px) translateY(-100px);
+            background: #ff758f;
+        }
+
+        /* Text elements design */
+        h1 {
+            color: #c9184a;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .hint {
+            margin-top: 30px;
+            color: #a4133c;
+            font-weight: bold;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Birthday Letter Reveal Overlay */
+        .card-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+            z-index: 20;
+        }
+        .card-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .letter {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            max-width: 450px;
+            text-align: center;
+            transform: scale(0.7) rotate(-5deg);
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 3px double #ffb3c6;
+        }
+        .card-overlay.show .letter {
+            transform: scale(1) rotate(0deg);
+        }
+        .letter h2 {
+            color: #c9184a;
+            margin-bottom: 15px;
+        }
+        .letter p {
+            color: #590d22;
+            line-height: 1.6;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        /* Floating 2D/3D Particle Hearts effect */
+        .heart-particle {
+            position: absolute;
+            pointer-events: none;
+            color: #ff4d6d;
+            animation: burst 3s forwards ease-out;
+            z-index: 5;
+        }
+        @keyframes burst {
+            0% {
+                transform: translate(0, 0) scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(var(--s)) rotate(var(--r));
+                opacity: 0;
+            }
+        }
+
+        /* Progress Bar to visualize the 15-second loop */
+        .timeline-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 6px;
+            background: #ff4d6d;
+            width: 0%;
+            animation: progress 15s linear infinite;
+            z-index: 30;
+        }
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Happy Birthday, My Beautiful Princess! 💖</h1>
+
+    <!-- 3D Gift Box Interactive Space -->
+    <div class="scene" id="giftBox">
+        <div class="cube">
+            <div class="face front"></div>
+            <div class="face back"></div>
+            <div class="face left"></div>
+            <div class="face right"></div>
+            <div class="face top"></div>
+            <div class="face bottom"></div>
+        </div>
+    </div>
+
+    <p class="hint" id="hintText">Preparing your surprise... ✨</p>
+
+    <!-- Hidden Letter Presentation Layer -->
+    <div class="card-overlay" id="cardOverlay">
+        <div class="letter">
+            <h2>To My Favorite Human, 👑</h2>
+            <p>Happy Birthday to the most amazing girl in the universe. Thank you for bringing so much love, warmth, and laughter into my life. Every single moment with you is a gift, and today I want to celebrate how incredibly special you are to me.</p>
+            <p>May your day be filled with as much happiness as you give me every single day. I love you to the moon and back! 💋</p>
+        </div>
+    </div>
+
+    <!-- Visual Anchor for the 15s track -->
+    <div class="timeline-bar"></div>
+
+    <script>
+        const box = document.getElementById('giftBox');
+        const overlay = document.getElementById('cardOverlay');
+        const hint = document.getElementById('hintText');
+
+        // Helper function to dynamically generate absolute bursting heart positions
+        function createHeartParticle() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            heart.innerHTML = '❤️';
+            
+            const x = (Math.random() - 0.5) * window.innerWidth * 0.8;
+            const y = (Math.random() - 0.7) * window.innerHeight * 0.8;
+            const size = Math.random() * 1.5 + 0.5;
+            const rotation = Math.random() * 360;
+
+            heart.style.setProperty('--x', `${x}px`);
+            heart.style.setProperty('--y', `${y}px`);
+            heart.style.setProperty('--s', size);
+            heart.style.setProperty('--r', `${rotation}deg`);
+            
+            heart.style.left = '50%';
+            heart.style.top = '50%';
+            
+            document.body.appendChild(heart);
+            
+            setTimeout(() => {
+                heart.remove();
+            }, 3000);
+        }
+
+        // Orchestrate the 15-second infinite automated lifecycle sequence
+        function runAnimationTimeline() {
+            // Stage 1: Reset state instantly (0 seconds)
+            overlay.classList.remove('show');
+            box.classList.remove('open');
+            hint.textContent = "Watching the gift arrive... 🎁";
+            hint.style.opacity = '1';
+
+            // Stage 2: Trigger box opening and heart explosion (3 seconds)
+            setTimeout(() => {
+                box.classList.add('open');
+                hint.style.opacity = '0';
+                for(let i=0; i<40; i++) {
+                    createHeartParticle();
+                }
+            }, 3000);
+
+            // Stage 3: Smoothly transition love letter layout into view (4 seconds)
+            setTimeout(() => {
+                overlay.classList.add('show');
+            }, 4000);
+
+            // Stage 4: Maintain state display until closing down cleanly (14 seconds)
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                hint.textContent = "Wrapping up your gift... ✨";
+                hint.style.opacity = '1';
+            }, 14000);
+        }
+
+        // Initial launch kick-off
+        runAnimationTimeline();
+
+        // Loop the entire 15,000ms timeline seamlessly
+        setInterval(runAnimationTimeline, 15000);
+    </script>
+</body>
+</html>
